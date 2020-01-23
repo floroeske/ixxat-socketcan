@@ -94,6 +94,18 @@ void ixxat_dump_mem(char *prompt, void *p, int l)
         DUMP_WIDTH, 1, p, l, false);
 }
 
+void ixxat_do_gettimeofday(struct timeval *tv)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,0,0)
+        struct timespec64 ts;
+        ktime_get_real_ts64(&ts);
+        tv->tv_sec = ts.tv_sec;
+        tv->tv_usec = ts.tv_nsec / 1000;
+#else
+        do_gettimeofday(tv);
+#endif
+}
+
 static void ixxat_usb_add_us(struct timeval *tv, u64 delta_us)
 {
         /* number of s. to add to final time */
@@ -138,7 +150,7 @@ void ixxat_usb_update_ts_now(struct ixx_usb_device *dev, u32 hw_time_base)
 void ixxat_usb_set_ts_now(struct ixx_usb_device *dev, u32 hw_time_base)
 {
         dev->time_ref.ts_dev_0 = hw_time_base;
-        do_gettimeofday(&dev->time_ref.tv_host_0);
+        ixxat_do_gettimeofday(&dev->time_ref.tv_host_0);
         dev->time_ref.ts_dev_last = hw_time_base;
 }
 

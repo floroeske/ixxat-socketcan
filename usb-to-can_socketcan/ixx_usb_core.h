@@ -277,6 +277,8 @@ struct ixx_can_msg_v2
 
 void ixxat_dump_mem(char *prompt, void *p, int l);
 
+void ixxat_do_gettimeofday(struct timeval *tv);
+
 void ixxat_usb_update_ts_now(struct ixx_usb_device *dev, u32 ts_now);
 void ixxat_usb_set_ts_now(struct ixx_usb_device *dev, u32 ts_now);
 void ixxat_usb_get_ts_tv(struct ixx_usb_device *dev, u32 ts,

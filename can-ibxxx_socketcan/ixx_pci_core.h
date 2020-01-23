@@ -406,6 +406,8 @@ struct ixx_pci_adapter {
 
 void ixxat_dump_mem(char *prompt, void *p, int l);
 
+void ixxat_do_gettimeofday(struct timeval *tv);
+
 void ixxat_pci_update_ts_now(struct ixx_pci_priv *dev, u32 ts_now);
 void ixxat_pci_set_ts_now(struct ixx_pci_priv *dev, u32 ts_now);
 void ixxat_pci_get_ts_tv(struct ixx_pci_priv *dev, u32 ts, ktime_t *k_time);
