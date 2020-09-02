@@ -235,9 +235,11 @@ void ixxat_dump_mem(char *prompt, void *p, int l)
         DUMP_WIDTH, 1, p, l, false);
 }
 
-void ixxat_do_gettimeofday(struct timeval *tv)
+void ixxat_do_gettimeofday(IXXAT_TIMEVAL *tv)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,0,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+        ktime_get_real_ts64(tv);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
         struct timespec64 ts;
         ktime_get_real_ts64(&ts);
         tv->tv_sec = ts.tv_sec;
@@ -247,33 +249,49 @@ void ixxat_do_gettimeofday(struct timeval *tv)
 #endif
 }
 
-static void ixxat_pci_add_us(struct timeval *tv, u64 delta_us)
+static void ixxat_pci_add_us(IXXAT_TIMEVAL *tv, u64 delta_us)
 {
         /* number of s. to add to final time */
         u32 delta_s = div_u64(delta_us, 1000000);
-
         delta_us -= delta_s * 1000000;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+        tv->tv_nsec += delta_us * 1000;
+        if (tv->tv_nsec >= 1000000000) {
+                tv->tv_nsec -= 1000000000;
+                delta_s++;
+        }
+        tv->tv_sec += delta_s;
+#else
         tv->tv_usec += delta_us;
         if (tv->tv_usec >= 1000000) {
                 tv->tv_usec -= 1000000;
                 delta_s++;
         }
+#endif
+
         tv->tv_sec += delta_s;
 }
 
 void ixxat_pci_get_ts_tv(struct ixx_pci_priv *dev, u32 ts, ktime_t *k_time)
 {
-        struct timeval tv = dev->time_ref.tv_host_0;
+        IXXAT_TIMEVAL tv = dev->time_ref.tv_host_0;
 
         if (ts < dev->time_ref.ts_dev_last) {
                 ixxat_pci_update_ts_now(dev, ts);
         }
 
         dev->time_ref.ts_dev_last = ts;
+
         ixxat_pci_add_us(&tv, ts - dev->time_ref.ts_dev_0);
 
-        *k_time = timeval_to_ktime(tv);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+        if(k_time)
+                *k_time = timespec64_to_ktime(tv);
+#else
+        if(k_time)
+                *k_time = timeval_to_ktime(tv);
+#endif
 }
 
 void ixxat_pci_update_ts_now(struct ixx_pci_priv *dev, u32 hw_time_base)

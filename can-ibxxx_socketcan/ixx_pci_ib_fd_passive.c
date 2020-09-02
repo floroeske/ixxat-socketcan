@@ -1193,7 +1193,11 @@ static int ixx_pas_ib_fd_xxx_probe(struct pci_dev *pdev,
         intf->memlen = pci_resource_len(pdev, 2);
 
         request_mem_region(intf->memadd, intf->memlen, "IXXAT PCI Memory");
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+        intf->memvadd = ioremap(intf->memadd, intf->memlen);
+#else
         intf->memvadd = ioremap_nocache(intf->memadd, intf->memlen);
+#endif
         if (!intf->memvadd) {
                 printk("memvadd ioremap_nocache failed\n");
                 err = -ENOBUFS;
@@ -1201,7 +1205,11 @@ static int ixx_pas_ib_fd_xxx_probe(struct pci_dev *pdev,
         }
 
         request_mem_region(intf->reg1add, intf->reg1len, "IXXAT PCI Registers");
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+        intf->reg1vadd = ioremap(intf->reg1add, intf->reg1len);
+#else
         intf->reg1vadd = ioremap_nocache(intf->reg1add, intf->reg1len);
+#endif
         if (!intf->reg1vadd) {
                 printk("reg1vadd ioremap_nocache failed\n");
                 err = -ENOBUFS;

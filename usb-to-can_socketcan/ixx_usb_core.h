@@ -19,6 +19,12 @@
 
 #include <linux/version.h>
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+#define IXXAT_TIMEVAL struct timespec64
+#else
+#define IXXAT_TIMEVAL struct timeval
+#endif
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 3)
 #define CANFD_CAPABLE 1
 #endif
@@ -193,7 +199,7 @@ struct ixx_usb_adapter {
 };
 
 struct ixx_time_ref {
-        struct timeval tv_host_0;
+        IXXAT_TIMEVAL tv_host_0;
         u32 ts_dev_0;
         u32 ts_dev_last;
 };
@@ -277,7 +283,7 @@ struct ixx_can_msg_v2
 
 void ixxat_dump_mem(char *prompt, void *p, int l);
 
-void ixxat_do_gettimeofday(struct timeval *tv);
+void ixxat_do_gettimeofday(IXXAT_TIMEVAL *tv);
 
 void ixxat_usb_update_ts_now(struct ixx_usb_device *dev, u32 ts_now);
 void ixxat_usb_set_ts_now(struct ixx_usb_device *dev, u32 ts_now);

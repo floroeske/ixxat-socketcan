@@ -369,8 +369,9 @@ static int ixx_act_ib_xxx_rcv_cmd(struct ixx_pci_interface *intf, u32 *rx_fifo,
         u32* res_size;
         struct ixx_dal_req *res_dal_req;
         u32 read_index, write_index, data_offset;
-        struct timeval start, end;
+        IXXAT_TIMEVAL start, end;
         size_t dal_size = sizeof(struct ixx_dal_req);
+        u64 timediff;
 
         write_index = rx_fifo[CAN_IB2X0_PCR_RES_WRITE_IDX];
         read_index = rx_fifo[CAN_IB2X0_PCR_RES_READ_IDX];
@@ -381,7 +382,12 @@ static int ixx_act_ib_xxx_rcv_cmd(struct ixx_pci_interface *intf, u32 *rx_fifo,
         ixxat_do_gettimeofday(&start);
         end = start;
 
-        while ((end.tv_usec - start.tv_usec) < CAN_IB2X0_CMD_TIMEOUT_US) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+        timediff = (end.tv_nsec - start.tv_nsec) / 1000;
+#else
+        timediff = end.tv_usec - start.tv_usec;
+#endif
+        while (timediff < CAN_IB2X0_CMD_TIMEOUT_US) {
                 if (++read_index == rx_fifo[CAN_IB2X0_PCR_RES_NUM_OBJ])
                         read_index = 0;
 
@@ -1853,7 +1859,11 @@ static int ixx_act_ib_xxx_probe(struct pci_dev *pdev,
         intf->memlen = pci_resource_len(pdev, 2);
 
         request_mem_region(intf->reg1add, intf->reg1len, "IXXAT PCI Registers");
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+        intf->reg1vadd = ioremap(intf->reg1add, intf->reg1len);
+#else
         intf->reg1vadd = ioremap_nocache(intf->reg1add, intf->reg1len);
+#endif
         if (!intf->reg1vadd) {
                 printk("reg1vadd ioremap_nocache failed\n");
                 err = -ENOBUFS;
@@ -1861,7 +1871,11 @@ static int ixx_act_ib_xxx_probe(struct pci_dev *pdev,
         }
 
         request_mem_region(intf->memadd, intf->memlen, "IXXAT PCI Memory");
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+        intf->memvadd = ioremap(intf->memadd, intf->memlen);
+#else
         intf->memvadd = ioremap_nocache(intf->memadd, intf->memlen);
+#endif
         if (!intf->memvadd) {
                 printk("memvadd ioremap_nocache failed\n");
                 err = -ENOBUFS;
