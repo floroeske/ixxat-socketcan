@@ -1,0 +1,34 @@
+* IXXAT SocketCan driver fork
+
+Based on the IXXAT Automation GmbH SocketCan driver version 1.1.148.0.
+
+IXXAT hasn't been updating the driver to a later Linux versions than 4.4.21.
+
+This version has been patched to work with Linux 5.8. It might or might not work with newer versions.
+
+This driver has just been successfully tested with the IXXAT USB-to-CAN FD adapter.
+
+The PCI card driver is untested.
+
+* Installation
+
+#+BEGIN_SRC
+make
+sudo make install
+#+END_SRC
+
+* Manual interface setup
+
+#+BEGIN_SRC
+sudo ip link set can0 up type can bitrate 500000
+#+END_SRC
+
+* Automatic interface setup
+
+Add the following to your /etc/network/interfaces file:
+
+#+BEGIN_SRC
+auto can0
+iface can0 can static
+	bitrate 500000
+#+END_SRC
